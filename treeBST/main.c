@@ -14,8 +14,9 @@ typedef struct TreeNode {
 //	else return search(node->right, key);
 //}
 
+
 TreeNode n1 = { 25,NULL,NULL };
-TreeNode n2 = { 16,&n1,NULL };
+TreeNode n2 = { 16,NULL,&n1 };
 TreeNode n3 = { 42,NULL,NULL };
 TreeNode n4 = { 46,&n3,NULL };
 TreeNode n5 = { 55,NULL,NULL };
@@ -26,19 +27,23 @@ TreeNode n9 = { 64,NULL,NULL };
 TreeNode n10 = { 63,&n8,&n9 };
 TreeNode n11 = { 70,NULL,NULL };
 TreeNode n12 = { 65,&n10,&n11 };
-TreeNode n13 = { 74,&n13,NULL };
+TreeNode n13 = { 74,&n12,NULL };
 TreeNode n14 = { 60,&n7,&n13 };
 TreeNode* root = &n14;
 
+int count = 0;
+
 TreeNode* search(TreeNode* node, int  key)
 {
+	count += 1;
 	if (node == NULL)  return NULL;
 	if (key == node->key) return node;
 	else if (key < node->key)
-		return  search(node->left, key);
+		  search(node->left, key);
 	else
-		return  search(node->right, key);
+		  search(node->right, key);
 }
+
 TreeNode* searchRe(TreeNode* node, int key)
 {
 	while (node != NULL) {
@@ -58,8 +63,10 @@ TreeNode* new_node(int item) {
 }
 
 
+//재귀
 
 TreeNode* insert_node(TreeNode* node, int key) {
+	count += 1;
 	// 트리가 공백이면 새로운 노드를 반환한다. 
 	if (node == NULL) return new_node(key);
 
@@ -72,6 +79,42 @@ TreeNode* insert_node(TreeNode* node, int key) {
 	// 변경된 루트 포인터를 반환한다. 
 	return node;
 }
+
+
+//반복 
+void insertIter(TreeNode* *root, int key)
+{
+	
+	TreeNode* toinsert = new_node(key);
+	TreeNode* curr = root;
+	TreeNode* prev = NULL;
+
+	while (curr != NULL) {//현재 노드가 비어있지 않으면 실행 
+		count += 1;//방문수 
+		prev = curr; //이 루프 마지막엔 curr 이 null을 가질떄 루프가 끝나기 때문에 그전 노드를 가짐 
+		if (key < curr->key)
+			curr = curr->left;
+		else	
+			curr = curr->right;// 끝노드에 다다르면 curr이 null을 가짐 
+	}
+
+
+	if (prev == NULL) {//현재노드가 비어있을때 연쇄적으로 null 값을 가짐 
+		prev = toinsert;
+		root = prev;
+		//root = toinsert;
+	}
+
+	else if (key < prev->key)
+		prev->left = toinsert;
+
+	else
+		prev->right = toinsert;
+}
+
+//
+
+
 TreeNode* min_value_node(TreeNode* node)
 {
 	TreeNode* current = node;
@@ -121,38 +164,66 @@ int select() {
 	return 0;
 }
 
+//--------------------------------------------------------------------------------------------
+TreeNode* initNode(int data, TreeNode* leftChild, TreeNode* rightChild) {
+	TreeNode* node = (TreeNode*)malloc(sizeof(TreeNode*));
+	node->key = data;
+	node->left = leftChild;
+	node->right = rightChild;
+	return node;
+}
 
-void inorder(TreeNode* root) {
-	if (root) {
-		inorder(root->left);
-		printf("%d ", root->key);
-		inorder(root->right);
+
+void inorder(TreeNode* node) {
+	if (node) {
+		inorder(node->left);
+		printf("%d ", node->key);
+		inorder(node->right);
 	}
 }
+//-------------------------------------------------------------------
 
 int start(char sel) {
 	int input;
-
+	int tempCount;
 
 	switch (sel) {
 	case 's':
+		count = 0;//방문수 초기화
 		printf("검색할값 입력:");
 		scanf_s("%d", &input);
-		inorder(root);
-		printf("검색성공: %d \n", search(root, input)->key);
+		TreeNode*a = search(root, input);
+		tempCount = count;//방문수 임시 저장 
+	
 		if (search(root, input) != NULL) {
 			printf("검색성공: %d \n", search(root, input)->key);
 		}
-
-
+		printf("방문한 노드의 수: %d\n", tempCount);
+		inorder(root);
+		printf("\n");
+	
 		break;
 	case 'i':
+		count = 1; //방문수 초기화
+		printf("삽입할 값 입력 :");
+		scanf_s("%d", &input);
+		insert_node(root, input);
+		printf("방문한 노드의 수: %d\n", count);
+		inorder(root);
+		printf("\n");
 		break;
 	case 'd':
 		break;
 	case 't':
 		break;
 	case 'u':
+		count = 0;//방문수 초기화
+		printf("삽입할 값 입력 :");
+		scanf_s("%d", &input);
+		insertIter(root, input);
+		printf("방문한 노드의 수: %d\n", count);
+		inorder(root);
+		printf("\n");
 		break;
 	case 'o':
 		break;
@@ -163,22 +234,27 @@ int start(char sel) {
 
 
 
-
-
 int main() {
-	inorder(root);
-	char sel;
+
+	
+	
+	inorder(&n14);
 	select();
 
-	printf("메뉴입력: ");
-	scanf_s("%c",&sel);
-	start(sel);
+	char sel;
+	
+	do{
+		
 
+		printf("메뉴입력:");
+		scanf_s(" %c", &sel);
+	
+		start(sel);
+	} while (sel != "c");
 
 	
 
-	
-	TreeNode* root = NULL;
+
 	TreeNode* tmp = NULL;
 
 
