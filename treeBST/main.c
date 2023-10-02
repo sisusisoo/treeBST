@@ -44,17 +44,7 @@ TreeNode* search(TreeNode* node, int  key)
 		  search(node->right, key);
 }
 
-TreeNode* searchRe(TreeNode* node, int key)
-{
-	while (node != NULL) {
-		if (key == node->key) return node;
-		else if (key < node->key)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return node; 	// 탐색에 실패했을 경우 NULL 반환
-}
+//새노드 만들고 초기화 
 TreeNode* new_node(int item) {
 	TreeNode* temp = (TreeNode*)malloc(sizeof(TreeNode));
 	temp->key = item;
@@ -64,7 +54,6 @@ TreeNode* new_node(int item) {
 
 
 //재귀
-
 TreeNode* insert_node(TreeNode* node, int key) {
 	count += 1;
 	// 트리가 공백이면 새로운 노드를 반환한다. 
@@ -89,6 +78,8 @@ void insertIter(TreeNode* *root, int key)
 	TreeNode* curr = root;
 	TreeNode* prev = NULL;
 
+
+	//어디로 넣을지 비교하고 넣을 곳의 부모노드를 prev에 넣음
 	while (curr != NULL) {//현재 노드가 비어있지 않으면 실행 
 		count += 1;//방문수 
 		prev = curr; //이 루프 마지막엔 curr 이 null을 가질떄 루프가 끝나기 때문에 그전 노드를 가짐 
@@ -99,10 +90,11 @@ void insertIter(TreeNode* *root, int key)
 	}
 
 
+	//넣을곳 부모노드에서 한번더 비교하고 넣음 
 	if (prev == NULL) {//현재노드가 비어있을때 연쇄적으로 null 값을 가짐 
-		prev = toinsert;
-		root = prev;
-		//root = toinsert;
+		//prev = toinsert;
+		//root = prev;
+		root = toinsert;//아무것도 없을때 root에 넣음 
 	}
 
 	else if (key < prev->key)
@@ -112,7 +104,7 @@ void insertIter(TreeNode* *root, int key)
 		prev->right = toinsert;
 }
 
-//
+
 
 
 TreeNode* min_value_node(TreeNode* node)
@@ -123,30 +115,108 @@ TreeNode* min_value_node(TreeNode* node)
 		current = current->left;
 	return current;
 }
+
+//재귀삭제 
 TreeNode* delete_node(TreeNode* root, int key) { // key 노드 삭제 후 루트 반환
+	count += 1;
 	if (root == NULL) return root;
 	if (key < root->key) 			// 키가 루트보다 작으면 왼쪽 서브 트리에 있음
 		root->left = delete_node(root->left, key);
 	else if (key > root->key) 		// 키가 루트보다 크면 오른쪽 서브 트리에 있음
 		root->right = delete_node(root->right, key);
 	else {				// 키가 루트와 같으면 이 노드를 삭제함
-		if (root->left == NULL) {	// (1) or (2)
+		if (root->left == NULL) {	// 
 			TreeNode* temp = root->right;
 			free(root);
-			return temp;
+			return temp;//left가 null일 경우 right(큰쪽)을 삭제노드부분에 넣는다 ---------오류----------
 		}
-		else if (root->right == NULL) {	// (1) or (2)
+		else if (root->right == NULL) {	
 			TreeNode* temp = root->left;
 			free(root);
 			return temp;
 		}
-
-		TreeNode* temp = min_value_node(root->right); 		// (3)
-		root->key = temp->key; 				// 직후 키 복사
+		//삭제 노드 오,왼 자식 둘다 있는 경우
+		TreeNode* temp = min_value_node(root->right);//삭제노드의 오른쪽에서 가장 작은 노드를 찾음 
+		root->key = temp->key; 				// 삭제노드 가장 오른쪽 키 복사해서 삭제노드 키에 대입 
 		root->right = delete_node(root->right, temp->key); 	// 직후 노드 삭제
 	}
 	return root;
 }
+
+
+
+//반복 삭제
+
+void delete_iter(TreeNode* root, int key) {
+	TreeNode* parent, * p, * succ, * succ_parent;
+	TreeNode* child;
+
+	parent = NULL;
+	p = root;
+
+	while ((p != NULL) && (p->key != key)) { //삭제할 노드의 위치 탐색
+		count += 1;
+		parent = p;
+		if (key < p->key) p = p->left;
+		else p = p->right;
+	}
+
+	//삭제할 노드가 없는 경우
+	if (p == NULL) {
+		printf("키가 이진 트리에 없음");
+		return;
+	}
+
+	//삭제할 노드가 단말 노드인 경우
+	if ((p->left == NULL) && (p->right == NULL)) {
+		if (parent != NULL) {
+			if (parent->left == p) parent->left = NULL;
+			else parent->right = NULL;
+		
+		}
+		else root = NULL;
+	
+	}
+
+	//삭제할 노드가 자식 노드를 한 개 가진 경우
+	else if ((p->left == NULL) || (p->right == NULL)) {
+		if (p->left != NULL) child = p->left;
+		else child = p->right;
+
+		if (parent != NULL) {
+			if (parent->left == p) parent->left = child;
+			else parent->right = child;
+		}
+
+		else root = child;
+	}
+
+	//삭제할 노드가 자식 노드를 두 개 가진 경우
+	else {
+		succ_parent = p;
+		succ = p->left;
+
+		//왼쪽 서브 트리에서 후계자 찾기
+		while (succ->right != NULL) {
+			succ_parent = succ;
+			succ = succ->right;
+		}
+
+		if (succ_parent->left == succ) succ_parent->left = succ->left;
+		else succ_parent->right = succ->left;
+
+		p->key = succ->key;
+		p = succ;
+		
+	}
+
+
+
+
+
+	
+}
+
 
 
 
@@ -176,12 +246,17 @@ TreeNode* initNode(int data, TreeNode* leftChild, TreeNode* rightChild) {
 
 void inorder(TreeNode* node) {
 	if (node) {
+		count += 1;
 		inorder(node->left);
 		printf("%d ", node->key);
 		inorder(node->right);
 	}
 }
 //-------------------------------------------------------------------
+
+
+
+
 
 int start(char sel) {
 	int input;
@@ -204,7 +279,7 @@ int start(char sel) {
 	
 		break;
 	case 'i':
-		count = 1; //방문수 초기화
+		count = 0; //방문수 초기화
 		printf("삽입할 값 입력 :");
 		scanf_s("%d", &input);
 		insert_node(root, input);
@@ -213,8 +288,23 @@ int start(char sel) {
 		printf("\n");
 		break;
 	case 'd':
+		//--------------------------------노드 재귀 삭제
+		count = 1; //방문수 초기화
+		printf("삭제할 값 입력 :");
+		scanf_s("%d", &input);
+		delete_node(root,input);
+		printf("방문한 노드의 수: %d\n", count);
+		inorder(root);
+		printf("\n");
 		break;
 	case 't':
+		count = 0;//방문수 초기화
+		printf("중위순회\n");
+		inorder(root);
+		printf("\n");
+		printf("방문수 : %d",count);
+		printf("\n");
+
 		break;
 	case 'u':
 		count = 0;//방문수 초기화
@@ -226,8 +316,17 @@ int start(char sel) {
 		printf("\n");
 		break;
 	case 'o':
+		//----------------------- 노드 삭제 반복 
+		count = 1; //방문수 초기화
+		printf("삭제할 값 입력 :");
+		scanf_s("%d", &input);
+		delete_iter(root, input);
+		printf("방문한 노드의 수: %d\n", count);
+		inorder(root);
+		printf("\n");
 		break;
 	case 'c':
+		exit(1);
 		break;
 	}
 }
